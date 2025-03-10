@@ -5,16 +5,16 @@ const circle =
   '<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="black" stroke-width="10" fill="none" /></svg>';
 
 const board = document.getElementsByClassName("container")[0];
-const cells = board.querySelectorAll(".allCells");
-const startBTN = document.getElementById("btn");
+const cells = board.querySelectorAll(".allCells"); //все ячейки
+const startBTN = document.getElementById("btn"); //кнопка для начала игры
 let firstMove = Math.floor(Math.random() * 2 + 1);
-let counter = 0;
+let counter = 0; //счётчик для определения хода
 
-const P1 = document.createElement("p");
+const P1 = document.createElement("p"); //игрок 1
 P1.innerText = "Player 1 X";
 P1.setAttribute("style", "color:red");
 P1.setAttribute("id", "player1");
-const P2 = document.createElement("p");
+const P2 = document.createElement("p"); //игрок 2
 P2.innerText = "Player 2 O";
 P2.setAttribute("style", "color:blue");
 P2.setAttribute("id", "player2");
