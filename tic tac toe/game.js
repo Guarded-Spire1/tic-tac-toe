@@ -1,21 +1,18 @@
-const krestik =
-  '<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><line x1="10" y1="10" x2="90" y2="90" stroke="white" stroke-width="5" /><line x1="10" y1="90" x2="90" y2="10" stroke="white" stroke-width="5" /></svg>';
-
-const circle =
-  '<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="black" stroke-width="10" fill="none" /></svg>';
+const krestik = "X";
+const circle = "O";
 
 const board = document.getElementsByClassName("container")[0];
-const cells = board.querySelectorAll(".allCells"); //все ячейки
-const startBTN = document.getElementById("btn"); //кнопка для начала игры
+const cells = board.querySelectorAll(".allCells");
+const startBTN = document.getElementById("btn");
 let firstMove = Math.floor(Math.random() * 2 + 1);
-let counter = 0; //счётчик для определения хода
+let occupiedCells = 0;
 
-const P1 = document.createElement("p"); //игрок 1
-P1.innerText = "Player 1 X";
+const P1 = document.createElement("p");
+P1.innerText = "Player moves first";
 P1.setAttribute("style", "color:red");
 P1.setAttribute("id", "player1");
-const P2 = document.createElement("p"); //игрок 2
-P2.innerText = "Player 2 O";
+const P2 = document.createElement("p");
+P2.innerText = "Ai moves first";
 P2.setAttribute("style", "color:blue");
 P2.setAttribute("id", "player2");
 
@@ -27,25 +24,13 @@ function startGame() {
   if (firstMove == 1) {
     //случайный выбор первого ходящего
     document.getElementById("btn").replaceWith(P1);
-    counter += 1;
     playerTurn();
   } else {
     document.getElementById("btn").replaceWith(P2);
-    counter += 2;
+    bestMove();
     playerTurn();
   }
 }
-
-function status() {
-  //для показа игрока делающего ход в данный момент
-  if (counter % 2 == 0) {
-    document.getElementById("player1").replaceWith(P2);
-  } else {
-    document.getElementById("player2").replaceWith(P1);
-  }
-}
-
-let occupiedCells = 0;
 
 function playerTurn() {
   //смена очереди игроков и изменения статуса игры
@@ -57,87 +42,121 @@ function playerTurn() {
         console.log("occupied");
         return;
       }
-      if (counter % 2 != 0) {
-        e.target.innerHTML = krestik;
-        e.target.classList.add("krestik", "occupied");
-        checkWinner(); //провереяет есть ли выиграшная комбинация
-        counter += 1;
-        occupiedCells += 1;
-        if (krestikWon) {
-          winner();
-        } else if (occupiedCells == 9) {
-          draw();
-        } else {
-          status();
-        }
+      e.target.innerHTML = krestik;
+      e.target.classList.add("occupied", "krestik");
+      occupiedCells += 1;
+      //если победителя или ничьи нет то ходит бот
+      if (checkWinner() == null) {
+        bestMove();
       } else {
-        e.target.innerHTML = circle;
-        e.target.classList.add("circle", "occupied");
-        checkWinner();
-        counter += 1;
-        occupiedCells += 1;
-        if (circleWon) {
-          winner();
-        } else if (occupiedCells == 9) {
-          draw();
+        if (checkWinner == "X") {
+          document.querySelector("p").innerHTML = "Krestiki WINS";
+        } else if (checkWinner == "O") {
+          document.querySelector("p").innerHTML = "Circle WINS";
         } else {
-          status();
+          document.querySelector("p").innerHTML = "DRAW";
         }
       }
-      console.log(e.target);
     });
   });
 }
 
-let krestikWon;
-let circleWon;
+const winningConditions = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+];
+
 function checkWinner() {
-  //выигрышные комбинации
-  const winningConditions = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
-  winningConditions.forEach((arr) => {
+  for (let arr of winningConditions) {
+    //выигрышные комбинации
     let krestikWins = arr.every((i) => cells[i].classList.contains("krestik")); //проверяет для ячейек с Х есть ли комбинация
     let circleWins = arr.every((i) => cells[i].classList.contains("circle")); // тоже самое для O
     if (krestikWins) {
-      krestikWon = true;
+      return "X";
     } else if (circleWins) {
-      circleWon = true;
+      return "O";
+    }
+  }
+  if (occupiedCells === 9) {
+    return "draw";
+  }
+  return null; //пока нет победителя или ничьи будет возщвращаться null чтобы "memory exceed error" не было
+}
+
+function bestMove() {
+  let bestScore = Infinity;
+  let move = null;
+
+  cells.forEach((cell) => {
+    if (!cell.classList.contains("occupied")) {
+      cell.classList.add("occupied", "circle");
+      occupiedCells += 1;
+      let score = minimax(true); //после получения результата за каждый ход выбирается наименьший score, ход имеющий наименьший score выполняется ботом
+      occupiedCells -= 1;
+      cell.classList.remove("occupied", "circle");
+      if (score < bestScore) {
+        bestScore = score;
+        move = cell;
+      }
     }
   });
-}
 
-function winner() {
-  //остонавливает игру и объявляет победителя и перезагружает сайт для повторной игры
-  if (krestikWon) {
-    document.querySelector("p").innerHTML = "Krestiki WINS";
-    setInterval(function () {
-      location.reload(true);
-    }, 2000);
-  } else if (circleWon) {
-    document.querySelector("p").innerHTML = "Circle WINS";
-    setInterval(function () {
-      location.reload(true);
-    }, 2000);
+  if (move) {
+    move.innerHTML = circle;
+    move.classList.add("circle", "occupied");
+    occupiedCells += 1;
+    if (checkWinner() == "O") {
+      document.querySelector("p").innerHTML = "Circle WINS";
+    } else if (checkWinner() == "draw") {
+      document.querySelector("p").innerHTML = "DRAW";
+    }
+  } else {
+    console.error("Player won");
   }
-  console.log(cells);
-  // код не работает, должен убирать возможность ставить крестики и нолики после окончания игры
-  // cells.forEach((cell) => {
-  //   cell.removeEventListener("click", console.log("Game ended"));
-  // });
 }
 
-// ничья
-function draw() {
-  document.querySelector("p").innerHTML = "DRAW";
-  setInterval(function () {
-    location.reload(true);
-  }, 2000);
+function minimax(isMaximizing) {
+  //base cases
+  let result = checkWinner();
+  if (result !== null) {
+    if (result === "X") return 1; // победа игрока
+    if (result === "O") return -1; // победа бота
+    if (result === "draw") return 0; // ничья
+  }
+
+  if (isMaximizing) {
+    //оценка всех ходов за X
+    let maxScore = -Infinity;
+    cells.forEach((cell) => {
+      if (!cell.classList.contains("occupied")) {
+        cell.classList.add("occupied", "krestik");
+        occupiedCells += 1;
+        let score = minimax(false); //после каждого хода оценивается всевозможные следующие ходы за O и по кругу до тех пор пока не будет base case
+        occupiedCells -= 1;
+        cell.classList.remove("occupied", "krestik");
+        maxScore = Math.max(score, maxScore);
+      }
+    });
+    return maxScore;
+  } else {
+    //оценка всех ходов за O
+    let minScore = Infinity;
+    cells.forEach((cell) => {
+      if (!cell.classList.contains("occupied")) {
+        cell.classList.add("occupied", "circle");
+        occupiedCells += 1;
+        let score = minimax(true);
+        occupiedCells -= 1;
+        cell.classList.remove("occupied", "circle");
+        minScore = Math.min(score, minScore);
+      }
+    });
+    return minScore;
+  }
 }
