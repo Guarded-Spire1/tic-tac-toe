@@ -29,3 +29,14 @@ body {
 section.centering {
   margin-bottom: 100px;
 }
+
+.krestik,
+.circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7rem;
+}
+.circle {
+  font-size: 9rem;
+}
