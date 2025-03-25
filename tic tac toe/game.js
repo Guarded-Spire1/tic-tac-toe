@@ -73,6 +73,7 @@ const winningConditions = [
 ];
 
 function checkWinner() {
+  //заменил forEach на for of чтобы можно было использовать return
   for (let arr of winningConditions) {
     //выигрышные комбинации
     let krestikWins = arr.every((i) => cells[i].classList.contains("krestik")); //проверяет для ячейек с Х есть ли комбинация
